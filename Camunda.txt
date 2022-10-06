@@ -1,0 +1,105 @@
+Comunda Web:
+
+	Task list - ui, писать на html
+	Admin     - управление доступом пользователя, состояние системы
+	Cockpit   - информация по текущим процессам
+
+-----------------------------------------------------------------------------------------------------------------------------------------	
+	
+Examples
+	https://youtu.be/n4x5zoKctQQ?t=2939
+	https://bpmn2.ru/blog/camunda-chto-eto-takoe
+	https://github.com/patozgg/camunda-showcase-insurance-application
+	https://www.programcreek.com/java-api-examples/?class=org.camunda.bpm.engine.RuntimeService&method=startProcessInstanceByKey
+	https://habr.com/ru/company/tinkoff/blog/490656/
+-----------------------------------------------------------------------------------------------------------------------------------------
+	
+TaskService + TaskQuery
+	createTaskQuery() - find task(s)
+	complete(String taskId)
+	
+	createAttachment(String attachmentType, String taskId, String processInstanceId, String attachmentName, String attachmentDescription, InputStream content)
+	getAttachment(String attachmentId)
+	getAttachmentContent(String attachmentId)
+	
+	getVariable(String taskId, String variableName)
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+ExternalTaskService + ExternalTaskQuery - https://docs.camunda.org/javadoc/camunda-bpm-platform/7.8/index.html?org/camunda/bpm/engine/ExternalTaskService.html
+        ExternalTaskService externalTaskService = engine.getExternalTaskService();
+
+        List<LockedExternalTask> list = externalTaskService.fetchAndLock(1, "workerId").topic("topicId", 10000).execute();
+
+        // sync
+        for (LockedExternalTask task : list) {
+            String processId = task.getProcessInstanceId();
+		
+            VariableMap variables = task.getVariables();
+            // actions
+			
+			externalTaskService.setRetries(task.getId(), 1);
+			
+            externalTaskService.complete(task.getId(), "workerId", variables);
+        }
+
+        // async
+        ExternalTask task = externalTaskService.createExternalTaskQuery().externalTaskId("")
+                // .processInstanceId("").topicName("")
+                .singleResult();
+        Map<String, Object> vars = new HashMap<>();
+        externalTaskService.complete(task.getId(), "workerId", vars);
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+RuntimeService - https://docs.camunda.org/javadoc/camunda-bpm-platform/7.2/org/camunda/bpm/engine/RuntimeService.html
+
+	startProcessInstanceByKey(String processDefinitionKey, String businessKey, Map<String,Object> variables)
+	
+	// message correlation
+	createMessageCorrelation(String messageName)
+		.processInstanceBusinessKey(businessKey)
+	  //.processInstanceVariableEquals("varName", "varValue")
+			.setVariable("varName", "varValue")
+				.correlateWithResult()
+
+	// file variable
+	FileValue document = Variables.fileValue("filename")
+        .file(bytes)
+        .mimeType("mimeType")
+		.create()
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+FormService
+
+	submitStartForm(String processDefinitionId, Map<String,Object> properties)
+-----------------------------------------------------------------------------------------------------------------------------------------	
+	
+HistoryService - https://docs.camunda.org/javadoc/camunda-bpm-platform/7.2/org/camunda/bpm/engine/HistoryService.html
+	createHistoricActivityInstanceQuery()	- find processes
+		processInstanceId(String processInstanceId)
+		
+	createHistoricActivityStatisticsQuery(String processDefinitionId)
+-----------------------------------------------------------------------------------------------------------------------------------------		
+	
+DecisionService - https://docs.camunda.org/javadoc/camunda-bpm-platform/7.5/org/camunda/bpm/engine/DecisionService.html
+	evaluateDecisionTableByKey(String decisionDefinitionKey, Map<String,Object> variables) - check desicion
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+CaseService	- https://docs.camunda.org/javadoc/camunda-bpm-platform/7.3/org/camunda/bpm/engine/CaseService.html
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+ProcessInstance - https://docs.camunda.org/javadoc/camunda-bpm-platform/7.2/org/camunda/bpm/engine/runtime/ProcessInstance.html
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+RepositoryService
+ManagementService
+IdentityService
+AuthorizationService
+FilterService
+
+
+
+Comunda BPM
+	Camunda Modeler
+	Блокировка вызова делегата?
+	Возможность задания числа попыток выполнить шаг перед падением, кастомный обработчик при падении - DefaultIncidentHandler
+	 'org.camunda.bpm.extension', name: 'camunda-bpm-assert'
